@@ -672,12 +672,12 @@ func (r *BarbicanReconciler) apiDeploymentCreateOrUpdate(ctx context.Context, in
 
 	Log.Info(fmt.Sprintf("Creating barbican API spec.  transporturlsecret: '%s'", instance.Status.TransportURLSecret))
 	Log.Info(fmt.Sprintf("database hostname: '%s'", instance.Status.DatabaseHostname))
-	apiSpec := barbicanv1beta1.BarbicanAPISpec{
-		BarbicanTemplate:    instance.Spec.BarbicanTemplate,
-		BarbicanAPITemplate: instance.Spec.BarbicanAPI,
-		DatabaseHostname:    instance.Status.DatabaseHostname,
-		TransportURLSecret:  instance.Status.TransportURLSecret,
-	}
+	apiSpec := barbicanv1beta1.BarbicanAPISpec{}
+	instance.Spec.BarbicanTemplate.DeepCopyInto(&apiSpec.BarbicanTemplate)
+	instance.Spec.BarbicanAPI.DeepCopyInto(&apiSpec.BarbicanAPITemplate)
+
+	apiSpec.DatabaseHostname = instance.Status.DatabaseHostname
+	apiSpec.TransportURLSecret = instance.Status.TransportURLSecret
 
 	// If NodeSelector is not specified in BarbicanAPITemplate, the current
 	// API instance inherits the value from the top-level CR.
