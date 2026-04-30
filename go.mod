@@ -6,14 +6,14 @@ require (
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.7
-	github.com/onsi/ginkgo/v2 v2.28.1
+	github.com/onsi/ginkgo/v2 v2.28.2
 	github.com/onsi/gomega v1.39.1
 	github.com/openstack-k8s-operators/barbican-operator/api v0.0.0-00010101000000-000000000000
-	github.com/openstack-k8s-operators/infra-operator/apis v0.6.1-0.20260128074606-03b808364e4a
+	github.com/openstack-k8s-operators/infra-operator/apis v0.6.1-0.20260416122644-5476763a36b6
 	github.com/openstack-k8s-operators/keystone-operator/api v0.6.1-0.20260206181019-26ebc8a46afe
-	github.com/openstack-k8s-operators/lib-common/modules/common v0.6.1-0.20260205083029-d03e9df035ef
-	github.com/openstack-k8s-operators/lib-common/modules/storage v0.6.1-0.20260205083029-d03e9df035ef
-	github.com/openstack-k8s-operators/lib-common/modules/test v0.6.1-0.20260205083029-d03e9df035ef
+	github.com/openstack-k8s-operators/lib-common/modules/common v0.6.1-0.20260417092244-81c71b39e981
+	github.com/openstack-k8s-operators/lib-common/modules/storage v0.6.1-0.20260417092244-81c71b39e981
+	github.com/openstack-k8s-operators/lib-common/modules/test v0.6.1-0.20260417092244-81c71b39e981
 	github.com/openstack-k8s-operators/mariadb-operator/api v0.6.1-0.20260127154438-ff95971883bb
 	go.uber.org/zap v1.27.1
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
@@ -61,13 +61,12 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/openshift/api v3.9.0+incompatible // indirect
-	github.com/openstack-k8s-operators/lib-common/modules/openstack v0.6.1-0.20260126081203-efc2df9207eb // indirect
+	github.com/openstack-k8s-operators/lib-common/modules/openstack v0.6.1-0.20260417092244-81c71b39e981 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.22.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.16.1 // indirect
-	github.com/rabbitmq/cluster-operator/v2 v2.16.0 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.7 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
@@ -101,7 +100,7 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apiextensions-apiserver v0.33.2 // indirect
+	k8s.io/apiextensions-apiserver v0.33.11 // indirect
 	k8s.io/apiserver v0.33.11 // indirect
 	k8s.io/component-base v0.33.11 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
@@ -140,3 +139,17 @@ replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20250627150254-e9823e9
 
 // custom RabbitmqClusterSpecCore for OpenStackControlplane (v2.16.0_patches)
 replace github.com/rabbitmq/cluster-operator/v2 => github.com/openstack-k8s-operators/rabbitmq-cluster-operator/v2 v2.6.1-0.20250929174222-a0d328fa4dec //allow-merging
+
+replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.21.0 //allow-merging
+
+replace github.com/openstack-k8s-operators/lib-common/modules/common => github.com/stuggi/lib-common/modules/common v0.0.0-20260429152920-f1900d36ca2b
+
+replace github.com/openstack-k8s-operators/lib-common/modules/openstack => github.com/stuggi/lib-common/modules/openstack v0.0.0-20260429152920-f1900d36ca2b
+
+replace github.com/openstack-k8s-operators/lib-common/modules/test => github.com/stuggi/lib-common/modules/test v0.0.0-20260429152920-f1900d36ca2b
+
+replace github.com/openstack-k8s-operators/infra-operator/apis => github.com/stuggi/infra-operator/apis v0.0.0-20260429134914-41a7e59a5a38
+
+replace github.com/openstack-k8s-operators/keystone-operator/api => github.com/stuggi/keystone-operator/api v0.0.0-20260429160458-495e7b1a1ff9
+
+replace github.com/openstack-k8s-operators/mariadb-operator/api => github.com/stuggi/mariadb-operator/api v0.0.0-20260429155043-94ed6e2dbe07
