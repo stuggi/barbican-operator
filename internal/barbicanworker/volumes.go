@@ -20,7 +20,6 @@ func GetWorkerVolumesAndMounts(instance *barbicanv1beta1.BarbicanWorker, overwri
 
 	workerVolumeMounts := []corev1.VolumeMount{
 		barbican.GetCustomConfigVolumeMount(),
-		barbican.GetKollaConfigVolumeMount(instance.Name),
 		barbican.GetLogVolumeMount(),
 	}
 	workerVolumeMounts = append(workerVolumeMounts, barbican.GetConfigOverwriteVolumeMounts(overwriteKeys)...)
@@ -38,7 +37,7 @@ func GetWorkerVolumesAndMounts(instance *barbicanv1beta1.BarbicanWorker, overwri
 	// Add PKCS11 volumes
 	if slices.Contains(instance.Spec.EnabledSecretStores, barbicanv1beta1.SecretStorePKCS11) && instance.Spec.PKCS11 != nil {
 		workerVolumes = append(workerVolumes, barbican.GetHSMVolumes(*instance.Spec.PKCS11)...)
-		workerVolumeMounts = append(workerVolumeMounts, barbican.GetHSMVolumeMounts()...)
+		workerVolumeMounts = append(workerVolumeMounts, barbican.GetHSMVolumeMounts(instance.Spec.PKCS11.ClientDataPath)...)
 	}
 
 	// ExtraMounts

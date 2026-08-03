@@ -317,12 +317,14 @@ var _ = Describe("Barbican controller", func() {
 			// Check the resulting deployment fields
 			Expect(int(*d.Spec.Replicas)).To(Equal(1))
 
-			Expect(d.Spec.Template.Spec.Volumes).To(HaveLen(6))
+			Expect(d.Spec.Template.Spec.Volumes).To(HaveLen(8))
 			Expect(d.Spec.Template.Spec.Containers).To(HaveLen(2))
 
 			// Check the default volumes
 			th.AssertVolumeExists("config-data", d.Spec.Template.Spec.Volumes)
 			th.AssertVolumeExists("config-data-custom", d.Spec.Template.Spec.Volumes)
+			th.AssertVolumeExists("run-httpd", d.Spec.Template.Spec.Volumes)
+			th.AssertVolumeExists("var-log-httpd", d.Spec.Template.Spec.Volumes)
 
 			// cert deployment volumes
 			th.AssertVolumeExists(barbicanTest.CABundleSecret.Name, d.Spec.Template.Spec.Volumes)
@@ -1264,7 +1266,7 @@ var _ = Describe("Barbican controller", func() {
 			// Check the resulting deployment fields
 			Expect(int(*d.Spec.Replicas)).To(Equal(1))
 
-			Expect(d.Spec.Template.Spec.Volumes).To(HaveLen(4))
+			Expect(d.Spec.Template.Spec.Volumes).To(HaveLen(6))
 			Expect(d.Spec.Template.Spec.Containers).To(HaveLen(2))
 
 			container := d.Spec.Template.Spec.Containers[1]
@@ -1284,7 +1286,7 @@ var _ = Describe("Barbican controller", func() {
 				}
 			}
 			Expect(foundMount).To(BeTrue())
-			Expect(container.VolumeMounts[indexMount].MountPath).To(Equal(barbican.PKCS11ClientDataMountPoint))
+			Expect(container.VolumeMounts[indexMount].MountPath).To(Equal(PKCS11ClientDataPath))
 		})
 
 		It("Verifies the Barbican PKCS11 struct is in good shape", func() {
@@ -1337,7 +1339,7 @@ var _ = Describe("Barbican controller", func() {
 				ContainSubstring("dummy-data"))
 		})
 
-		It("Verifies if 00-default.conf, barbican-api-config.json and 01-custom.conf have the right contents for Barbican.", func() {
+		It("Verifies if 00-default.conf and 01-custom.conf have the right contents for Barbican.", func() {
 			confSecret := th.GetSecret(barbicanTest.BarbicanConfigSecret)
 			Expect(confSecret).ShouldNot(BeNil())
 
@@ -1352,12 +1354,6 @@ var _ = Describe("Barbican controller", func() {
 			conf = confSecret.Data["01-custom.conf"]
 			Expect(conf).To(
 				ContainSubstring(PKCS11CustomData))
-
-			conf = confSecret.Data["barbican-api-config.json"]
-			Expect(conf).To(
-				ContainSubstring("\"source\": \"/var/lib/config-data/hsm\""))
-			Expect(conf).To(
-				ContainSubstring("\"dest\": \"/usr/local/luna\""))
 		})
 
 		It("Verifies if 00-default.conf and 01-custom.conf have the right contents for BarbicanAPI.", func() {
@@ -1377,17 +1373,6 @@ var _ = Describe("Barbican controller", func() {
 				ContainSubstring(PKCS11CustomData))
 		})
 
-		It("Verifies if barbican-api-config.json has the right contents for BarbicanAPI.", func() {
-			confSecret := th.GetSecret(barbicanTest.BarbicanConfigSecret)
-			Expect(confSecret).ShouldNot(BeNil())
-
-			conf := confSecret.Data["barbican-api-config.json"]
-			Expect(conf).To(
-				ContainSubstring("\"source\": \"/var/lib/config-data/hsm\""))
-			Expect(conf).To(
-				ContainSubstring("\"dest\": \"/usr/local/luna\""))
-		})
-
 		It("Checks if the PKCS11PreJob successfully executed", func() {
 			BarbicanExists(barbicanTest.Instance)
 
@@ -1405,7 +1390,7 @@ var _ = Describe("Barbican controller", func() {
 					elemClient = index
 				} else if mount.Name == barbican.ScriptVolume {
 					elemScript = index
-				} else if mount.Name == barbican.ConfigVolume && mount.SubPath == "" {
+				} else if mount.Name == barbican.ConfigVolume && mount.SubPath == "my.cnf" {
 					elemConfig = index
 				}
 			}
@@ -1415,7 +1400,7 @@ var _ = Describe("Barbican controller", func() {
 
 			Eventually(func(g Gomega) {
 				g.Expect(volume).To(Equal(barbican.PKCS11ClientDataVolume))
-				g.Expect(mountPath).To(Equal(barbican.PKCS11ClientDataMountPoint))
+				g.Expect(mountPath).To(Equal(PKCS11ClientDataPath))
 			}, timeout, interval).Should(Succeed())
 
 			volume = th.GetJob(barbicanTest.BarbicanPKCS11Prep).Spec.Template.Spec.Containers[0].VolumeMounts[elemScript].Name
@@ -1431,7 +1416,7 @@ var _ = Describe("Barbican controller", func() {
 
 			Eventually(func(g Gomega) {
 				g.Expect(volume).To(Equal(barbican.ConfigVolume))
-				g.Expect(mountPath).To(Equal(barbican.ConfigMountPoint))
+				g.Expect(mountPath).To(Equal("/etc/my.cnf"))
 			}, timeout, interval).Should(Succeed())
 		})
 	})

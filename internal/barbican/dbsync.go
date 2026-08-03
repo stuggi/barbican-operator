@@ -3,14 +3,11 @@ package barbican
 import (
 	barbicanv1beta1 "github.com/openstack-k8s-operators/barbican-operator/api/v1beta1"
 	"github.com/openstack-k8s-operators/lib-common/modules/common/env"
+	"github.com/openstack-k8s-operators/lib-common/modules/common/pod"
+	"github.com/openstack-k8s-operators/lib-common/modules/serviceuser"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-const (
-	// DBSyncCommand -
-	DBSyncCommand = "barbican-manage db upgrade"
 )
 
 // DbSyncJob func
@@ -24,11 +21,7 @@ func DbSyncJob(instance *barbicanv1beta1.Barbican, labels map[string]string, ann
 		dbSyncMounts = append(dbSyncMounts, instance.Spec.BarbicanAPI.TLS.CreateVolumeMounts(nil)...)
 	}
 
-	args := []string{"-c", DBSyncCommand}
-
 	envVars := map[string]env.Setter{}
-	envVars["KOLLA_CONFIG_STRATEGY"] = env.SetValue("COPY_ALWAYS")
-	envVars["KOLLA_BOOTSTRAP"] = env.SetValue("TRUE")
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -44,16 +37,17 @@ func DbSyncJob(instance *barbicanv1beta1.Barbican, labels map[string]string, ann
 				Spec: corev1.PodSpec{
 					RestartPolicy:      corev1.RestartPolicyOnFailure,
 					ServiceAccountName: instance.RbacResourceName(),
+					SecurityContext:    pod.RestrictivePodSecurityContext(serviceuser.BarbicanUID),
 					Volumes:            dbSyncVolumes,
 					Containers: []corev1.Container{
 						{
 							Name: instance.Name + "-db-sync",
 							Command: []string{
-								"/bin/bash",
+								"barbican-manage",
 							},
-							Args:            args,
+							Args:            []string{"db", "upgrade"},
 							Image:           instance.Spec.BarbicanAPI.ContainerImage,
-							SecurityContext: GetBaseSecurityContext(),
+							SecurityContext: pod.RestrictiveSecurityContext(serviceuser.BarbicanUID),
 							Env:             env.MergeEnvs([]corev1.EnvVar{}, envVars),
 							VolumeMounts:    dbSyncMounts,
 						},

@@ -1,6 +1,7 @@
 package barbicanapi
 
 import (
+	"fmt"
 	"slices"
 
 	barbicanv1beta1 "github.com/openstack-k8s-operators/barbican-operator/api/v1beta1"
@@ -18,13 +19,15 @@ func GetAPIVolumesAndMounts(instance *barbicanv1beta1.BarbicanAPI, overwriteKeys
 	apiVolumes := []corev1.Volume{
 		barbican.GetCustomConfigVolume(instance.Name),
 		barbican.GetLogVolume(),
+		barbican.GetRunHttpdVolume(),
+		barbican.GetVarLogHttpdVolume(),
 	}
 
 	apiVolumeMounts := []corev1.VolumeMount{
 		barbican.GetCustomConfigVolumeMount(),
-		barbican.GetKollaConfigVolumeMount(instance.Name),
 		barbican.GetLogVolumeMount(),
 	}
+	apiVolumeMounts = append(apiVolumeMounts, barbican.GetAPIHttpdVolumeMounts()...)
 	apiVolumeMounts = append(apiVolumeMounts, barbican.GetConfigOverwriteVolumeMounts(overwriteKeys)...)
 
 	// prepend general config volumes and mounts
@@ -51,6 +54,15 @@ func GetAPIVolumesAndMounts(instance *barbicanv1beta1.BarbicanAPI, overwriteKeys
 			if err != nil {
 				return nil, nil, err
 			}
+			// 10-barbican_wsgi_main.conf's SSLCertificateFile/SSLCertificateKeyFile
+			// point at these final paths (see barbican_controller.go's
+			// httpdVhostConfig) -- without this override CreateVolumeMounts
+			// falls back to the old kolla staging path and httpd fails to
+			// find its TLS cert/key.
+			certMount := fmt.Sprintf("/etc/pki/tls/certs/%s.crt", endpt.String())
+			keyMount := fmt.Sprintf("/etc/pki/tls/private/%s.key", endpt.String())
+			svc.CertMount = &certMount
+			svc.KeyMount = &keyMount
 			apiVolumes = append(apiVolumes, svc.CreateVolume(endpt.String()))
 			apiVolumeMounts = append(apiVolumeMounts, svc.CreateVolumeMounts(endpt.String())...)
 		}
@@ -59,7 +71,7 @@ func GetAPIVolumesAndMounts(instance *barbicanv1beta1.BarbicanAPI, overwriteKeys
 	// Add PKCS11 volumes
 	if slices.Contains(instance.Spec.EnabledSecretStores, barbicanv1beta1.SecretStorePKCS11) && instance.Spec.PKCS11 != nil {
 		apiVolumes = append(apiVolumes, barbican.GetHSMVolumes(*instance.Spec.PKCS11)...)
-		apiVolumeMounts = append(apiVolumeMounts, barbican.GetHSMVolumeMounts()...)
+		apiVolumeMounts = append(apiVolumeMounts, barbican.GetHSMVolumeMounts(instance.Spec.PKCS11.ClientDataPath)...)
 	}
 
 	// ExtraMounts

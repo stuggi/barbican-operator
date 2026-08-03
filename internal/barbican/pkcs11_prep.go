@@ -9,11 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	// PKCS11PrepCommand -
-	PKCS11PrepCommand = "/usr/local/bin/kolla_start"
-)
-
 // PKCS11PrepJob func
 func PKCS11PrepJob(instance *barbicanv1beta1.Barbican, labels map[string]string, annotations map[string]string) *batchv1.Job {
 	// The PKCS11 Prep job just needs the main barbican config files, and the files
@@ -24,7 +19,6 @@ func PKCS11PrepJob(instance *barbicanv1beta1.Barbican, labels map[string]string,
 	pkcs11Volumes = append(pkcs11Volumes, GetVolumes(instance.Name)...)
 
 	pkcs11Mounts := []corev1.VolumeMount{
-		GetKollaConfigVolumeMount(instance.Name + "-pkcs11-prep"),
 		GetScriptVolumeMount(),
 	}
 	pkcs11Mounts = append(pkcs11Mounts, GetVolumeMounts()...)
@@ -37,15 +31,14 @@ func PKCS11PrepJob(instance *barbicanv1beta1.Barbican, labels map[string]string,
 
 	// add any HSM volumes
 	pkcs11Volumes = append(pkcs11Volumes, GetHSMVolumes(*instance.Spec.PKCS11)...)
-	pkcs11Mounts = append(pkcs11Mounts, GetHSMVolumeMounts()...)
+	pkcs11Mounts = append(pkcs11Mounts, GetHSMVolumeMounts(instance.Spec.PKCS11.ClientDataPath)...)
 
-	// add luna specific config files
-
-	args := []string{"-c", PKCS11PrepCommand}
-
+	// This job runs as root (not a kolla artifact): the vendor HSM client
+	// library setup performed by generate_pkcs11_keys.sh is not verified to
+	// work under a non-root UID without real HSM hardware, so root access is
+	// kept here as a documented exception -- see docs/remove-kolla-plan.md.
 	runAsUser := int64(0)
 	envVars := map[string]env.Setter{}
-	envVars["KOLLA_CONFIG_STRATEGY"] = env.SetValue("COPY_ALWAYS")
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -65,9 +58,8 @@ func PKCS11PrepJob(instance *barbicanv1beta1.Barbican, labels map[string]string,
 						{
 							Name: instance.Name + "-pkcs11-prep",
 							Command: []string{
-								"/bin/bash",
+								ScriptMountPoint + "/generate_pkcs11_keys.sh",
 							},
-							Args:  args,
 							Image: instance.Spec.BarbicanAPI.ContainerImage,
 							SecurityContext: &corev1.SecurityContext{
 								RunAsUser: &runAsUser,

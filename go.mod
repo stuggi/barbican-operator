@@ -3,7 +3,7 @@ module github.com/openstack-k8s-operators/barbican-operator
 go 1.26.3
 
 require (
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/k8snetworkplumbingwg/network-attachment-definition-client v1.7.7
 	github.com/onsi/ginkgo/v2 v2.32.0
@@ -12,6 +12,7 @@ require (
 	github.com/openstack-k8s-operators/infra-operator/apis v0.6.1-0.20260723061747-66bf6fca9dfd
 	github.com/openstack-k8s-operators/keystone-operator/api v0.6.1-0.20260725001628-3d6a573c5777
 	github.com/openstack-k8s-operators/lib-common/modules/common v0.6.1-0.20260724091355-a86f6d29e055
+	github.com/openstack-k8s-operators/lib-common/modules/serviceuser v0.0.0-00010101000000-000000000000
 	github.com/openstack-k8s-operators/lib-common/modules/storage v0.6.1-0.20260724091355-a86f6d29e055
 	github.com/openstack-k8s-operators/lib-common/modules/test v0.6.1-0.20260724091355-a86f6d29e055
 	github.com/openstack-k8s-operators/mariadb-operator/api v0.6.1-0.20260722153822-fa2443790f63
@@ -139,3 +140,7 @@ replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a
 
 // pin gnostic-models to v0.6.9 to avoid yaml type conflict with kube-openapi
 replace github.com/google/gnostic-models => github.com/google/gnostic-models v0.6.9 //allow-merging
+
+replace github.com/openstack-k8s-operators/lib-common/modules/common => github.com/stuggi/lib-common/modules/common v0.0.0-20260803090423-67cc2c6b5301
+
+replace github.com/openstack-k8s-operators/lib-common/modules/serviceuser => github.com/stuggi/lib-common/modules/serviceuser v0.0.0-20260803090423-67cc2c6b5301

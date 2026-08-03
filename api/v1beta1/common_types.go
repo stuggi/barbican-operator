@@ -151,12 +151,13 @@ type BarbicanPKCS11Template struct {
 
         // +kubebuilder:validation:Required
         // The OpenShift secret that stores the HSM client data.
-        // These will be mounted to /var/lib/config-data/hsm
+        // These will be mounted directly at ClientDataPath.
         ClientDataSecret string `json:"clientDataSecret"`
 
         // +kubebuilder:validation:Optional
 	// +kubebuilder:default="/etc/hsm-client"
-        // Location to which kolla will copy the data in ClientDataSecret.
+        // Location at which ClientDataSecret is mounted, i.e. where the HSM
+        // vendor client library expects to find it.
         ClientDataPath string `json:"clientDataPath"`
 }
 

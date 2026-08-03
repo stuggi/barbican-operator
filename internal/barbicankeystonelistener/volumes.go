@@ -18,7 +18,6 @@ func GetListenerVolumesAndMounts(instance *barbicanv1beta1.BarbicanKeystoneListe
 
 	listenerVolumeMounts := []corev1.VolumeMount{
 		barbican.GetCustomConfigVolumeMount(),
-		barbican.GetKollaConfigVolumeMount(instance.Name),
 		barbican.GetLogVolumeMount(),
 	}
 	listenerVolumeMounts = append(listenerVolumeMounts, barbican.GetConfigOverwriteVolumeMounts(overwriteKeys)...)

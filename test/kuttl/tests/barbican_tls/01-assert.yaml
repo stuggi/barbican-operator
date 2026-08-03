@@ -88,17 +88,24 @@ spec:
             timeoutSeconds: 5
           resources: {}
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 42403
+            runAsNonRoot: true
             runAsUser: 42403
+            seccompProfile:
+              type: RuntimeDefault
           terminationMessagePath: /dev/termination-log
           terminationMessagePolicy: File
           volumeMounts:
             - mountPath: /var/log/barbican
               name: logs
-        - args:
-            - -c
-            - /usr/local/bin/kolla_start
-          command:
-            - /bin/bash
+        - command:
+            - /usr/sbin/httpd
+          args:
+            - -DFOREGROUND
           name: barbican-api
           readinessProbe:
             failureThreshold: 3
@@ -112,11 +119,16 @@ spec:
             timeoutSeconds: 5
           resources: {}
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 42403
+            runAsNonRoot: true
             runAsUser: 42403
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
-            - mountPath: /var/lib/config-data/default
-              name: config-data
-              readOnly: true
             - mountPath: /etc/my.cnf
               name: config-data
               readOnly: true
@@ -124,12 +136,32 @@ spec:
             - mountPath: /etc/barbican/barbican.conf.d
               name: config-data-custom
               readOnly: true
-            - mountPath: /var/lib/kolla/config_files/config.json
-              name: config-data
-              readOnly: true
-              subPath: barbican-api-config.json
             - mountPath: /var/log/barbican
               name: logs
+            - mountPath: /etc/httpd/conf/httpd.conf
+              name: config-data
+              readOnly: true
+              subPath: httpd.conf
+            - mountPath: /etc/httpd/conf.modules.d/mime.conf
+              name: config-data
+              readOnly: true
+              subPath: mime.conf
+            - mountPath: /etc/httpd/conf.d/ssl.conf
+              name: config-data
+              readOnly: true
+              subPath: ssl.conf
+            - mountPath: /etc/httpd/conf.d/10-barbican_wsgi_main.conf
+              name: config-data
+              readOnly: true
+              subPath: 10-barbican_wsgi_main.conf
+            - mountPath: /var/www/cgi-bin/barbican/main
+              name: config-data
+              readOnly: true
+              subPath: main
+            - mountPath: /run/httpd
+              name: run-httpd
+            - mountPath: /var/log/httpd
+              name: var-log-httpd
             - mountPath: /etc/barbican/optional_policy.json
               name: config-data-custom
               readOnly: true
@@ -142,33 +174,37 @@ spec:
               name: combined-ca-bundle
               readOnly: true
               subPath: tls-ca-bundle.pem
-            - mountPath: /var/lib/config-data/tls/certs/internal.crt
+            - mountPath: /etc/pki/tls/certs/internal.crt
               name: internal-tls-certs
               readOnly: true
               subPath: tls.crt
-            - mountPath: /var/lib/config-data/tls/private/internal.key
+            - mountPath: /etc/pki/tls/private/internal.key
               name: internal-tls-certs
               readOnly: true
               subPath: tls.key
-            - mountPath: /var/lib/config-data/tls/certs/public.crt
+            - mountPath: /etc/pki/tls/certs/public.crt
               name: public-tls-certs
               readOnly: true
               subPath: tls.crt
-            - mountPath: /var/lib/config-data/tls/private/public.key
+            - mountPath: /etc/pki/tls/private/public.key
               name: public-tls-certs
               readOnly: true
               subPath: tls.key
       volumes:
         - name: config-data
           secret:
-            defaultMode: 420
+            defaultMode: 416
             secretName: barbican-config-data
         - name: config-data-custom
           secret:
-            defaultMode: 420
+            defaultMode: 416
             secretName: barbican-api-config-data
         - emptyDir: {}
           name: logs
+        - emptyDir: {}
+          name: run-httpd
+        - emptyDir: {}
+          name: var-log-httpd
         - name: combined-ca-bundle
           secret:
             defaultMode: 292
