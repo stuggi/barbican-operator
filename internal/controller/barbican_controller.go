@@ -1243,7 +1243,7 @@ func (r *BarbicanReconciler) reconcileInit(
 	rbacRules := []rbacv1.PolicyRule{
 		{
 			APIGroups:     []string{"security.openshift.io"},
-			ResourceNames: []string{"anyuid"},
+			ResourceNames: []string{"anyuid", "nonroot-v2"},
 			Resources:     []string{"securitycontextconstraints"},
 			Verbs:         []string{"use"},
 		},
