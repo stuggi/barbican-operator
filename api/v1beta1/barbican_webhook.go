@@ -127,6 +127,9 @@ func (spec *BarbicanSpec) ValidateCreate(basePath *field.Path, namespace string)
 	allErrs = append(allErrs, service.ValidateRoutedOverrides(
 		basePath.Child("barbicanAPI").Child("override").Child("service"),
 		spec.BarbicanAPI.Override.Service)...)
+	allErrs = append(allErrs, validateServicePortNames(
+		basePath.Child("barbicanAPI").Child("override").Child("service"),
+		spec.BarbicanAPI.Override.Service)...)
 
 	// pkcs11 verifications
 	spec.ValidatePKCS11(basePath, &allErrs)
@@ -154,6 +157,9 @@ func (spec *BarbicanSpecCore) ValidateCreate(basePath *field.Path, namespace str
 
 	// validate the service override key is valid
 	allErrs = append(allErrs, service.ValidateRoutedOverrides(
+		basePath.Child("barbicanAPI").Child("override").Child("service"),
+		spec.BarbicanAPI.Override.Service)...)
+	allErrs = append(allErrs, validateServicePortNames(
 		basePath.Child("barbicanAPI").Child("override").Child("service"),
 		spec.BarbicanAPI.Override.Service)...)
 
@@ -201,6 +207,9 @@ func (spec *BarbicanSpec) ValidateUpdate(old BarbicanSpec, basePath *field.Path,
 
 	// validate the service override key is valid
 	allErrs = append(allErrs, service.ValidateRoutedOverrides(
+		basePath.Child("barbicanAPI").Child("override").Child("service"),
+		spec.BarbicanAPI.Override.Service)...)
+	allErrs = append(allErrs, validateServicePortNames(
 		basePath.Child("barbicanAPI").Child("override").Child("service"),
 		spec.BarbicanAPI.Override.Service)...)
 
@@ -271,9 +280,19 @@ func (spec *BarbicanSpecCore) ValidateUpdate(old BarbicanSpecCore, basePath *fie
 	allErrs = append(allErrs, service.ValidateRoutedOverrides(
 		basePath.Child("barbicanAPI").Child("override").Child("service"),
 		spec.BarbicanAPI.Override.Service)...)
+	allErrs = append(allErrs, validateServicePortNames(
+		basePath.Child("barbicanAPI").Child("override").Child("service"),
+		spec.BarbicanAPI.Override.Service)...)
 
 	allErrs = append(allErrs, spec.ValidateBarbicanTopology(basePath, namespace)...)
 	return allWarns, allErrs
+}
+
+func validateServicePortNames(
+	basePath *field.Path,
+	overrides map[service.Endpoint]service.RoutedOverrideSpec,
+) field.ErrorList {
+	return common_webhook.ValidatePortNameOverrides(basePath, overrides, common_webhook.DefaultServicePortNames())
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

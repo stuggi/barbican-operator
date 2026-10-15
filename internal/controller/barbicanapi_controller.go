@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -420,7 +421,7 @@ func (r *BarbicanAPIReconciler) reconcileInit(
 				Labels:    exportLabels,
 				Selector:  serviceLabels,
 				Port: service.GenericServicePort{
-					Name:     endpointName,
+					Name:     endpointTypeStr,
 					Port:     data.Port,
 					Protocol: corev1.ProtocolTCP,
 				},
@@ -438,7 +439,6 @@ func (r *BarbicanAPIReconciler) reconcileInit(
 
 			return ctrl.Result{}, err
 		}
-
 		svc.AddAnnotation(map[string]string{
 			service.AnnotationEndpointKey: endpointTypeStr,
 		})
@@ -452,11 +452,31 @@ func (r *BarbicanAPIReconciler) reconcileInit(
 			svc.AddAnnotation(map[string]string{
 				service.AnnotationIngressCreateKey: "false",
 			})
-			if svc.GetServiceType() == corev1.ServiceTypeLoadBalancer {
-				svc.AddAnnotation(map[string]string{
-					service.AnnotationHostnameKey: svc.GetServiceHostname(), // add annotation to register service name in dnsmasq
-				})
+		}
+		if svc.GetServiceType() == corev1.ServiceTypeLoadBalancer {
+			dnsHostname, dnsAliases, err := service.GetVHostServerName(svcOverride, svc.GetServiceHostname())
+			if err != nil {
+				instance.Status.Conditions.Set(condition.FalseCondition(
+					condition.CreateServiceReadyCondition,
+					condition.ErrorReason,
+					condition.SeverityWarning,
+					condition.CreateServiceReadyErrorMessage,
+					err.Error()))
+				return ctrl.Result{}, err
 			}
+			// Clear override-provided DNS values before adding the endpoint's
+			// managed values: AddAnnotation merges via MergeStringMaps, which
+			// keeps any existing (user-supplied) value, so a stale hostname/cnames
+			// from the service override would otherwise win over the managed one.
+			svc.RemoveAnnotation(service.AnnotationHostnameKey)
+			svc.RemoveAnnotation(service.AnnotationCNAMEsKey)
+			dnsAnnotations := map[string]string{
+				service.AnnotationHostnameKey: dnsHostname,
+			}
+			if len(dnsAliases) > 0 {
+				dnsAnnotations[service.AnnotationCNAMEsKey] = strings.Join(dnsAliases, ",")
+			}
+			svc.AddAnnotation(dnsAnnotations)
 		}
 
 		ctrlResult, err := svc.CreateOrPatch(ctx, helper)
